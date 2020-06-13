@@ -1,0 +1,1069 @@
+<h1>About</h1>
+<p>Course: <a href="https://mde.tw/cd2020">https://mde.tw/cd2020</a></p>
+<p>KMOLab, Department of Mechanical Design Engineering, National Formosa University, Taiwan.</p>
+<p>This project is mainly used with <a href="https://mde.tw/cd2020">https://mde.tw/cd2020</a> repository to demonstrate how to apply Python and Dart programs to build web-based tools to enhance the effectiveness of the mechanical collaborative product design.</p>
+<p>Website: <a href="https://mde.tw/cd2020pj1">https://mde.tw/cd2020pj1</a></p>
+<p>Repository: <a href="https://github.com/mdecourse/cd2020pj1">https://github.com/mdecourse/cd2020pj1</a></p>
+<h2>Tasks</h2>
+<h4>協同產品設計課程實習項目:</h4>
+<h4>1. OnShape 零組件繪圖及協同設定</h4>
+<p style="padding-left: 30px;"><a href="https://learn.onshape.com/">https://learn.onshape.com/</a></p>
+<h4>2. 零組件轉檔進入 CoppeliaSim</h4>
+<h4 style="padding-left: 30px;">Parasolid</h4>
+<p style="padding-left: 60px;"><a href="/downloads/Parasolid-XT-format-reference_2006.pdf">Parasolid-XT-format-reference_2006.pdf</a></p>
+<h4 style="padding-left: 30px;">SAT</h4>
+<p style="padding-left: 60px;"><a href="/downloads/sat_file_format.pdf">Sat File format.pdf</a></p>
+<p style="padding-left: 60px;"><a href="https://en.wikipedia.org/wiki/ACIS">https://en.wikipedia.org/wiki/ACIS</a></p>
+<h4 style="padding-left: 30px;">DXF, IGES and STEP</h4>
+<p style="padding-left: 60px;"><a href="/downloads/dxf_iges_step.pdf">DXF_IGES_STEP.pdf</a></p>
+<h4>3. CoppeliaSim 零組件轉入後之零件分割, 零件從屬關係組立與控制設定</h4>
+<h4>4. 利用 CoppeliaSim Python Remote API 控制四輪車</h4>
+<p style="padding-left: 30px;"><a href="http://mde.tw/wcmj2020/content/%E5%8F%AF%E6%94%9C%E7%A8%8B%E5%BC%8F%E7%92%B0%E5%A2%83.html">五專網際內容管理系統中使用的可攜程式下載</a> (登入 @gm)</p>
+<p style="padding-left: 30px;"><a href="https://www.coppeliarobotics.com/helpFiles/en/remoteApiClientSide.htm">https://www.coppeliarobotics.com/helpFiles/en/remoteApiClientSide.htm</a></p>
+<p style="padding-left: 30px;"><a href="https://programmer.group/v-rep-adding-vision-sensor-and-image-acquisition.html">https://programmer.group/v-rep-adding-vision-sensor-and-image-acquisition.html</a></p>
+<p style="padding-left: 30px;"><a href="https://gist.github.com/mstfldmr/45d6e47bb661800b982c39d30215bc88">https://gist.github.com/mstfldmr/45d6e47bb661800b982c39d30215bc88</a></p>
+<p style="padding-left: 30px;"><a href="https://stackoverflow.com/questions/52325679/flask-opencv-send-and-receive-images-in-bytes">https://stackoverflow.com/questions/52325679/flask-opencv-send-and-receive-images-in-bytes</a></p>
+<h4>5. 將 Remote API 程式結合 Flask + Oauth2 + SQLite 進行 網際機電控制程式開發</h4>
+<h4>https-server.py</h4>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from flask import Flask, render_template
+import ssl
+
+context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+context.load_cert_chain('./../cd2020.crt', './../cd2020.key')
+
+app = Flask(__name__)
+
+@app.route('/') 
+def hello_world():
+    return 'Hello, From Flask!'
+
+@app.route('/drawROC')
+def drawROC():
+    return render_template("drawROC.html")
+    
+if __name__== '__main__': 
+	app.run(ssl_context=context)</pre>
+<h4>http-server.py</h4>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from flask import Flask, render_template, send_from_directory
+
+# for randomgrouping
+import random
+import requests
+
+app = Flask(__name__)
+
+@app.route('/') 
+def hello_world():
+    return 'Hello, From Flask!'
+    
+@app.route('/drawROC')
+def drawROC():
+    return render_template("drawROC.html")
+    
+# setup static directory
+@app.route('/static/&lt;path:path&gt;')
+def send_static(path):
+    return send_from_directory('static', path)
+    
+@app.route("/randomgrouping")
+def randomGrouping():
+    # url to get the student number data
+    target_url = "http://mde.tw/cd2020/downloads/2020spring_cd_2a_list.txt"
+    # use requests to retrieve data from url
+    f = requests.get(target_url)
+    # get student list from target_url
+    # use splitlines() to put student number into studList
+    studList = f.text.splitlines()
+    # minimum number for each group
+    num_in_one_group = 10
+    # temp list to save the student number for each group
+    gpList = []
+    # whole class list
+    group = []
+    # number of member list for each group
+    numList = []
+    # get numList
+    numList = getNumList(len(studList), num_in_one_group)
+    # check numList
+    # list numList
+    #print("Expected number of member list:" + str(numList))
+    
+    output = ""
+    gth = 1
+    inc = 0
+    
+    # use shuffle method of random module to shuffle studList
+    random.shuffle(studList)
+    output += "Before sort: &lt;br /&gt;"
+    for i in numList:
+        # print 20 * sign
+        output += '=' * 20 + "&lt;br /&gt;";
+        output += "group " + str(gth) + " has " + str(i) + " members:&lt;br /&gt;"
+        # reset group list
+        gpList = []
+        for j in range(i):
+            output += studList[j+inc] + "&lt;br /&gt;"
+            # append student number into grpList
+            gpList.append(studList[j+inc])
+
+        gth = gth + 1
+        inc = inc + j
+        # sort gpList
+        gpList.sort()
+        group.append(gpList)
+
+    # print output which is the result before sorting
+    print(output)
+    # print group whis is the sorted result
+    print("Sorted result:" + str(group))
+
+    output = ""
+    # output sorted result
+    output += '=' * 20 + "&lt;br /&gt;"
+    output += 'Sorted result:&lt;br /&gt;'
+    gth = 1
+
+    # list sorted data seperated by \n
+    for i in range(len(group)):
+        # print seperated mark
+        output += '=' * 20 + "&lt;br /&gt;"
+        output += "group" + str(gth) + "&lt;br /&gt;"
+        gpList = []
+
+        for j in range(len(group[i])):
+            output += str(group[i][j]) + "&lt;br /&gt;"
+
+        gth = gth + 1
+
+    return output
+
+# get the distributed list among each group
+def getNumList(total, eachGrp=10):
+    # total is the number of students
+    # each group at least 10 students
+    #eachGrp = 10;
+    # may divide into "grpNum" number of group
+    grpNum = total // eachGrp;
+    # check grpNum
+    #print(grpNum)
+    # vacan list
+    splits = []
+    # find remainder when total number divid into "grpNum" number of group
+    remainder = total % grpNum
+    # number of people in one group by calculation
+    calGrp = total // grpNum
+
+    for i in range(grpNum):
+        splits.append(calGrp)
+
+    # check first splits
+    #print(splits)
+
+    for i in range(remainder):
+        splits[i] += 1
+
+    # check final splits
+    #print(splits);
+    return splits;
+
+    
+if __name__== '__main__': 
+	app.run()</pre>
+<h4 style="padding-left: 30px;">Oauth2 設定:</h4>
+<h4 style="padding-left: 60px;">設定網址:<br/><br/><a href="https://console.developers.google.com">https://console.developers.google.com</a> <br/><br/>總共有兩項設定:<br/><br/>1. 啟用 Google + API<br/><br/>2. 然後到憑證處建立專案, 設定授權的 URI</h4>
+<h4 style="padding-left: 30px;">Flask and SQLite:</h4>
+<p style="padding-left: 60px;"><a href="https://flask.palletsprojects.com/en/1.1.x/patterns/sqlite3/">https://flask.palletsprojects.com/en/1.1.x/patterns/sqlite3/</a></p>
+<h4>6. 利用 Ubuntu 20.04 虛擬主機, 進行網際協同機電系統操控模擬</h4>
+<p style="padding-left: 30px;">Login to @gm account and download <a href="https://drive.google.com/open?id=143jFMheM1xjLxhLkSAouThLzj3WUYX6_">Virtualbox appliance of Ubuntu 20.04</a> for CMSiMDE, Oauth2 and CoppeliaSim remote API program development.</p>
+<h4>7. 協同四輪車與平面機構系統產品整合開發</h4>
+<p style="padding-left: 30px;"><a href="https://stackoverflow.com/questions/42787927/displaying-opencv-image-using-python-flask">https://stackoverflow.com/questions/42787927/displaying-opencv-image-using-python-flask</a></p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">import vrep
+
+print('Program started')
+vrep.simxFinish(-1) # just in case, close all opened connections
+clientID=vrep.simxStart('127.0.0.1',19997,True,True,5000,5)
+if clientID!=-1:
+    print('Connected to remote API server')
+    # relative to remote API client location, relative path:
+    vrep.simxLoadScene(clientID,'test/testScene.ttt',0xFF,vrep.simx_opmode_blocking)
+    # relative to V-REP executable location, relative path:
+    vrep.simxLoadScene(clientID,'scenes/collisionDetectionDemo.ttt',0x00,vrep.simx_opmode_blocking)
+    # relative to remote API client location, absolute path:
+    vrep.simxLoadScene(clientID,'c:/python27/test/testScene.ttt',0xFF,vrep.simx_opmode_blocking)
+    # relative to V-REP executable location, absolute path:
+    vrep.simxLoadScene(clientID,'d:/v_rep/qrelease/release/scenes/collisionDetectionDemo.ttt',0x00,vrep.simx_opmode_blocking)
+    vrep.simxFinish(clientID)
+else:
+    print('Failed connecting to remote API server')
+print('Program ended')</pre>
+<p><br/><br/><br/>Firewall</p>
+<h3>git</h3>
+<p>為了避免將 git 推送 credential 存入 控制台\使用者帳戶\認證管理員, 可以利用</p>
+<pre class="brush:js;auto-links:false;toolbar:false" contenteditable="false">git config --edit --system</pre>
+<p>在 vi 編輯器環境中移除 git 近端的 credential - helper 設定.</p>
+<p></p>
+<p style="padding-left: 30px;"></p>
+<p></p><h3>Firewall</h3>
+<h4>讓 Windows 10 可以接受 ping 封包</h4>
+<h4>進入防火牆進階設定:</h4>
+<p style="padding-left: 30px;">檔案及印表機共用 (回應要求 - ICMPv4-In) 私人, 公用與網域的防火牆權限開啟</p>
+<p style="padding-left: 30px;">檔案及印表機共用 (回應要求 - ICMPv6-In) 私人, 公用與網域的防火牆權限開啟</p>
+<h3>Virtualbox</h3>
+<p>由於每一個虛擬主機的硬碟檔案必須擁有一個獨立的 UUID, 因此若複製虛擬硬碟檔案後, 必須利用</p>
+<pre class="brush:js;auto-links:false;toolbar:false" contenteditable="false">"c:\Program Files\Oracle\VirtualBox\VBoxManage.exe" internalcommands sethduuid win10_64_comsol5.5.vmdk</pre>
+<p>指令更改虛擬硬碟檔案的 UUID, 才能配置在同一 Virtualbox 系統下.</p>
+<h4>虛擬主機的網路設定</h4>
+<p>NAT</p>
+<p style="padding-left: 30px;">NAT 代表 Network Address Translation, etwork Address Translation, 在 Virtualbox 中的虛擬主機網路設為 NAT 時, 除了虛擬主機本身可以透過 Host 連外網路上網外, 還可以透過虛擬主機 Network 中動態設定 Port Forwarding, 讓 Windows Host 可以作為 Client 端. 以所設定的埠號對應連線.</p>
+<p style="padding-left: 30px;">NAT 常用的 Port Forwarding 為 SSH 22, 與開發 CMSiMDE 套件常用的 7443, 8443, 9443 與 8444 等.</p>
+<p>Host only</p>
+<p style="padding-left: 30px;">主要用來建立 Windows 網路內部的伺服器主機, 其服務對象只限於 Windows Host</p>
+<p>Bridged</p>
+<p style="padding-left: 30px;">主要用來建立能夠與 Windows 網路位階相同的外部伺服器主機, 其服務對象可以擴及 Windows Host 的網路之外的區域網路或廣域網路上的 Client 端.</p><h3>OpenCV</h3>
+<p><a href="https://stackoverflow.com/questions/38030263/how-to-send-an-image-from-flask-server-to-javascript-display-on-frontend/40307539#40307539">https://stackoverflow.com/questions/38030263/how-to-send-an-image-from-flask-server-to-javascript-display-on-frontend/40307539#40307539</a></p>
+<p><a href="https://stackoverflow.com/questions/46373163/passing-a-cv2-frame-from-view-to-template">https://stackoverflow.com/questions/46373163/passing-a-cv2-frame-from-view-to-template</a> </p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">@app.route('/image')
+def image():
+    img = cv2.imread('raw.png')
+    data = cv.imencode('.png', img)[1].tobytes()
+    return Response(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + data + b'\r\n\r\n', mimetype='multipart/x-mixed-replace; boundary=frame'</pre>
+<p></p><h1>Streaming</h1>
+<h4>問卷:</h4>
+<p style="padding-left: 30px;">請登入 ＠gm 帳號後, 填寫下列問卷.</p>
+<p style="padding-left: 30px;"><a href="https://docs.google.com/forms/d/e/1FAIpQLScLY_6kxFkm3KBjEpTZ5-n8Ec11enwrW7tZVO5ScDpZGi0zXQ/formrestricted">第八與第九週上課是否繼續採用線上方式進行</a></p>
+<p style="padding-left: 30px;">結果:</p>
+<p style="padding-left: 30px;"><img alt="" class="add_border" height="375" src="/images/streaming_form_result.png" width="600"/></p>
+<p style="padding-left: 30px;"><a href="https://docs.google.com/forms/d/e/1FAIpQLSdSOcjjza66eb0uPVc4l2yQHq-zDr7eYddLAV-7y7BSm5ijPg/formrestricted">第十週之後的分組方式</a></p>
+<p style="padding-left: 30px;"><img alt="" class="add_border" height="367" src="/images/grouping_form_result.png" width="600"/></p>
+<h3>W7-W11</h3>
+<h4>2a w7 Youtube + OBS live streaming video:</h4>
+<p><iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="allowfullscreen" frameborder="0" height="315" src="https://www.youtube.com/embed/NajsiwqQM9s" width="560"></iframe></p>
+<p><iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="allowfullscreen" frameborder="0" height="315" src="https://www.youtube.com/embed/dxk2U94BVSI" width="560"></iframe></p>
+<h4>2b Meet + Youtube +OBS</h4>
+<p><iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="allowfullscreen" frameborder="0" height="315" src="https://www.youtube.com/embed/FaOQiIGeK0U" width="560"></iframe></p>
+<p><iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="allowfullscreen" frameborder="0" height="315" src="https://www.youtube.com/embed/nJa4iIpCoyk" width="560"></iframe></p>
+<p><iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="allowfullscreen" frameborder="0" height="315" src="https://www.youtube.com/embed/YR4KroWEbKk" width="560"></iframe></p>
+<h4>W8</h4>
+<h4>2a</h4>
+<p style="padding-left: 30px;"><a href="https://drive.google.com/file/d/1K-_MyctzaYgrCBvMSaSGbiv8RNH81wSl/view?usp=sharing">https://drive.google.com/file/d/1K-_MyctzaYgrCBvMSaSGbiv8RNH81wSl/view?usp=sharing</a> (登入 @gm 帳號後可以在線觀看)</p>
+<p style="padding-left: 30px;"><a href="https://drive.google.com/file/d/1Rj12vxv72whk_cHXc5mHvOURB8bNIJJN/view?usp=sharing">https://drive.google.com/file/d/1Rj12vxv72whk_cHXc5mHvOURB8bNIJJN/view?usp=sharing</a> (登入 @gm 帳號後可以在線觀看)</p>
+<h4>2b</h4>
+<p style="padding-left: 30px;"><a href="https://drive.google.com/file/d/1G2L6yKkHrviF9CbZnjp8bXLAWJEmQBUM/view?usp=sharing">https://drive.google.com/file/d/1G2L6yKkHrviF9CbZnjp8bXLAWJEmQBUM/view?usp=sharing</a> (登入 @gm 帳號後可以在線觀看)</p>
+<p style="padding-left: 30px;"><a href="https://drive.google.com/file/d/1GaIy77PYW7hxr4TB6noSuvtShA-6rKfA/view?usp=sharing">https://drive.google.com/file/d/1GaIy77PYW7hxr4TB6noSuvtShA-6rKfA/view?usp=sharing</a> (登入 @gm 帳號後可以在線觀看)</p>
+<h4>W9 期中考週線上課程進行步驟:</h4>
+<ol>
+<li style="padding-left: 30px;">老師與組長開會, 開放 live streaming, 回答與課程相關問題.</li>
+<li style="padding-left: 30px;">要求所有學員, 透過個人行事曆建立 Google Handout Meet 會議, 展示個人桌面操作, 開放 live stream, 並錄製至少 10 分鐘的個人期中簡報影片, 說明個人於 W1-W8 所完成的相關內容.</li>
+<li style="padding-left: 30px;">完成上述個人簡報錄製後, 將存於個人 Google Drive 中的期中簡報 mp4 影片, 以共享設置為所有登入 @gm 帳號的用戶都可以觀看.</li>
+<li style="padding-left: 30px;">完成上述影片共享設置後, 請登入 @gm 個人帳號, 至 <a href="https://forms.gle/T1Vs4sv9EdetxoWF7">https://forms.gle/T1Vs4sv9EdetxoWF7</a>  填寫表單並完成期中個人自評成績登錄.</li>
+<li style="padding-left: 30px;">完成上述各步驟後, 將繼續進行線上課程之其他內容直播或錄影.</li>
+</ol>
+<h4 style="padding-left: 30px;">2a</h4>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/file/d/1kmu5oLunO6_97dDLZoQ2OzGh29KeMH91/view?usp=sharing">https://drive.google.com/file/d/1kmu5oLunO6_97dDLZoQ2OzGh29KeMH91/view?usp=sharing</a> (登入 @gm 帳號後可以在線觀看)</p>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/file/d/120lV8i8yvKzEkF5kF2efpY-zuPc_G5kl/view?usp=sharing">https://drive.google.com/file/d/120lV8i8yvKzEkF5kF2efpY-zuPc_G5kl/view?usp=sharing</a> (登入 @gm 帳號後可以在線觀看)</p>
+<h4 style="padding-left: 30px;">2b</h4>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/file/d/1LkVizKKucLDV2mUkOrBqhkUhIfFsRDbX/view?usp=sharing">https://drive.google.com/file/d/1LkVizKKucLDV2mUkOrBqhkUhIfFsRDbX/view?usp=sharing</a> (登入 @gm 帳號後可以在線觀看)</p>
+<h4>W10 實體上課</h4>
+<h4 style="padding-left: 30px;">2a</h4>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/file/d/1od9YBN9IEiJWqcfHKX_F9jWjytWSbjlS/view?usp=sharing">https://drive.google.com/file/d/1od9YBN9IEiJWqcfHKX_F9jWjytWSbjlS/view?usp=sharing</a> <span>(登入 @gm 帳號後可以在線觀看)</span></p>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/file/d/1XbFbW7AD95kN2pl8MJWCzBdfE_W1V4Sy/view?usp=sharing">https://drive.google.com/file/d/1XbFbW7AD95kN2pl8MJWCzBdfE_W1V4Sy/view?usp=sharing</a> <span>(登入 @gm 帳號後可以在線觀看)</span></p>
+<h4 style="padding-left: 30px;"><span>2b</span></h4>
+<p style="padding-left: 60px;"><span>Oauth2 client 連線設定流程說明:</span></p>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/file/d/1G4MzXUIbNRK7z2XdjtxXzhX51zHHwq85/view?usp=sharing">https://drive.google.com/file/d/1G4MzXUIbNRK7z2XdjtxXzhX51zHHwq85/view?usp=sharing</a> <span>(登入 @gm 帳號後可以在線觀看)</span></p>
+<h4><span>W11</span></h4>
+<p style="padding-left: 30px;"><span><a href="https://drive.google.com/file/d/1WZH3Xrogi3xUStrHYSL6AcTWzHCWt-gA/view?usp=sharing">Virtualbox 虛擬主機 NAT 設定與 X-win 連線</a> (登入 @gm 後可以在線觀看)</span></p>
+<p style="padding-left: 30px;"><span><a href="https://drive.google.com/open?id=1S9gTVrscJAvGmXz0UxVKbWkAqEXkmO9d">Ubuntu 20.04 上的 CoppeliaSim 四輪車與 Windows 上的 Python Remote API 在 X-Windows 介面下協同控制影片</a> (登入 @gm 後可以在線觀看)</span></p>
+<h4><span>期中自評成績處理程式:</span></h4>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">import csv
+
+# read student list
+filename = 'E:/wcm2020/data/tmp/2020_spring_score/2a/j1a_list.txt'
+with open(filename, encoding="utf-8") as f:
+    content = f.readlines()
+student = [x.strip() for x in content] 
+#print(content)
+
+# Timestamp, email, 修課名稱, url, score, desp, memo
+# 0, 1, 2, 3, 4, 5, 6
+#total = 0
+all = {}
+with open('y:/2020midterm.csv', encoding="utf-8") as csv_file:
+    csv_reader = csv.reader(csv_file, delimiter=',')
+    
+    line_count = 0
+    for row in csv_reader:
+        if line_count == 0:
+            #print(f'Column names are {", ".join(row)}')
+            line_count += 1
+        else:
+            student_num = row[1].split("@")[0]
+            #print(student_num)
+            student_score = row[3]
+            #print(student_score)
+            try:
+                all.update({student_num: student_score})
+            except:
+                all.update({student_num: "error"})
+            #print(f'\t{row[0]} works in the {row[1]} department, and was born in {row[2]}.')
+            #print(f'\t{row[4]}')
+            #total += int(row[4])
+            line_count += 1
+print(all)
+print(student)
+'''
+for i in student:
+    
+    #if i in all:
+        #pass
+    #else:
+        #print(str(i))
+    
+    try:
+        print(i + "\t" + all[i])
+    except:
+        print(i + "\t60")
+'''
+
+    #print(f'Processed {line_count} lines.')
+    #print("平均=" + str(total/line_count))
+    
+
+</pre>
+<p style="padding-left: 30px;"></p><h2>W12-W14</h2>
+<h4>W12 - collaborative mechatranic system design and control in Ubuntu 20.04 virtual server</h4>
+<p style="padding-left: 30px;">Virtualbox Ubuntu 20.04 </p>
+<p style="padding-left: 30px;">NatNetwork settings:</p>
+<p style="padding-left: 60px;">Ipv4 and IPv6 Port forwarding setup</p>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/open?id=1cIUtCBvyZuhD5w3H7Hpou8FZhI_w94Ku">Tutorial video 1</a> (for @gm users only)</p>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/open?id=1HeBPfffEp_kWK0JAKkptUm0hy3l5-wOA">Tutorial video 2</a> (for @gm users only)</p>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/open?id=1a5jJheOTX3Rnq8A9ZInwKgp1cR-NJO1B">Tutorial video 3</a> (for @gm users only)</p>
+<p>W13 - bridged your Server NIC to allow group member to connect with browser</p>
+<p style="padding-left: 30px;">Virtualbox Ubuntu 20.04</p>
+<p style="padding-left: 30px;">How to change UUID of virtualbox disk file?</p>
+<p style="padding-left: 30px;">How to set IPv6 Nat Network port mapping?</p>
+<p style="padding-left: 30px;">How to edit netplan setting to allow bridged NIC working?</p>
+<p style="padding-left: 60px;"><a href="https://drive.google.com/open?id=1wNPk_scB3kE7nRVFk2yS_xn6Ony7069C">Tutorial video 1</a> (for @gm users only)</p>
+<p style="padding-left: 30px;">Add <a href="https://portableapps.com/apps/internet/filezilla_portable">Filezilla</a> to download and upload file between Windows and Virtual Ubuntu</p>
+<p style="padding-left: 30px;">    <a href="https://drive.google.com/open?id=1qQV9M9JSjWgl0ovLJxByhe_wLcAnzMdS">Tutorial video 2</a> (for @gm users only)</p>
+<p>W14 - mini project for Ubuntu Nat Network port forwarding</p>
+<p style="padding-left: 30px;"><a href="https://drive.google.com/file/d/1ZeP5F7KWnjeKKCVpkKSJOO_zfFbLBAau/view?usp=sharing">Tutorial video 1</a> (for @gm users only)</p>
+<h4>netplan 00-installer-config.yaml examples</h4>
+<p>Use dhcp4 and dhcp6, set Hinet dns as server:</p>
+<pre class="brush:js;auto-links:false;toolbar:false" contenteditable="false">network:
+  ethernets:
+    enp0s3:
+        dhcp4: true
+        dhcp6: true
+        nameservers:
+            addresses:
+                - 2001:b000:168::1
+  version: 2</pre>
+<h4>Set IPv4 and IPv6 addresses, gateway and dns server:</h4>
+<pre class="brush:js;auto-links:false;toolbar:false" contenteditable="false">network:
+    ethernets:
+        enp0s3:
+            dhcp4: false
+            dhcp6: false
+            addresses: 
+                - 192.168.1.13/24
+                - 2001:288:6004::1/64
+            gateway4: 192.168.1.1
+            gateway6: 2001:288:6004::254
+            nameservers:
+                addresses:
+                    - 140.130.1.2
+                    - 168.95.1.1
+                    - 2001:288:6004:1::2
+                    - 2001:b000:168::1
+    version: 2</pre>
+<h4>/etc/apt/apt.conf.d/proxy.conf</h4>
+<pre class="brush:js;auto-links:false;toolbar:false" contenteditable="false">Acquire::http::Proxy "http://[2001:288:6004:17::69]:3128/";</pre>
+<p></p><h3>Ubuntu commands</h3>
+<p>W12 Ubuntu 20.04 Virtualbox commands:</p>
+<pre class="brush:js;auto-links:false;toolbar:false" contenteditable="false">1  clear (清除畫面)
+2  sudo halt (關機)
+3  sudo apt install xorg
+4  sudo apt install fluxbox fluxconf
+5  sudo apt install lxde
+6  sudo reboot
+7  xterm&amp;
+8  sudo apt install xterm
+9  sudo apt install firefox
+10  sudo apt install python3-pip
+11  sudo halt
+12  ls -l
+13  python3 list
+14  pip3 list
+15  pip3 install flask flask_cors lxml bs4 markdown pelican leo authomatic imutils numpy
+16  xterm&amp;
+17  cd /etc/netplan
+18  ls -l
+19  sudo vi 00-installer-config.yaml
+20  sudo halt
+21  cd tmp
+22  ls -l
+23  mkdir tmp
+24  cd tmp
+25  git clone --recurse-submodules https://github.com/mdecourse/cd2020pj1.git
+26  cd cd2020pj1
+27  ls -l
+28  python3 wsgi.py
+29  cd docs
+30  ls -l
+31  cd cmsimde
+32  python3 wsgi.py
+33  cd ..
+34  cd wcm2020
+35  cd cmsimde
+36  python3 wsgi.py
+37  cd ..
+38  cd wcmj2020
+39  cd cmsimde
+40  python3 wsgi.py
+41  cd
+42  cd tmp
+43  ls -l
+44  git clone --recurse-submodules https://github.com/mdecourse/wcm2020.git
+45  git clone --recurse-submodules https://github.com/mdecourse/wcmj2020.git
+46  xterm&amp;
+47  ping 140.130.17.254
+48  sudo netplan apply
+49  cd /etc/netplan
+50  ls -l
+51  sudo vi 00-installer-config.yaml
+52  sudo netplan apply
+53  ping 140.130.17.254
+54  leo&amp;
+55  firefox&amp;
+56  xterm&amp;
+57  pwd
+58  ls -l
+59  python3 car_model.py
+60  sudo pip3 install opencv-python3
+61  sudo pip3 install opencv-python
+62  python3 car_model.py
+63  clear
+64  sudo apt install scite
+65  scite&amp;
+66  pwd
+67  cd tmp
+68  ls -l
+69  cd self_driving_car
+70  ls -l
+71  cd CoppeliaSim_4_Self_Driving_Car_Simulation
+72  ls -l
+73  xterm&amp;
+74  ls -l
+75  cd
+76  ls -l
+77  cd coppeliasim4_rev4
+78  ls -l
+79  cd CoppeliaSim_Edu_V4_0_0_Ubuntu18_04
+80  ls -l
+81  cd programming
+82  ls -l
+83  cd remoteApiBinds
+84  ls -l
+85  cd remoteApiBindings
+86  ls -l
+87  cd Lib
+88  ls -l
+89  cd lib
+90  ls -l
+91  cd lib
+92  ls -l
+93  cd Ubuntu18_04
+94  ls -l
+95  sudo cp remoteApi.so /home/kmol2020/tmp/self_driving_car/CoppeliaSim_4_Self_Driving_Car_Simulation
+96  kmol2020@kmol2020:~/tmp/self_driving_car/CoppeliaSim_4_Self_Driving_Car_Simulation
+97  cd /etc/netplan
+98  ls -l
+99  sudo vi 00-installer-config.yaml
+100  sudo netplan apply
+101  sudo vi 00-installer-config.yaml
+102  sudo netplan apply
+103  ping 2001:288:6004:17::254
+104  sudo halt
+105  xterm&amp;
+106  ping www.google.com
+107  ifconfig
+108  ping6 2001:288:6004:17::254
+109  ping localhost
+110  ping 10.0.0.1
+111  ping 10.0.2.2
+112  ping 10.0.2.1
+113  ping 2001:288:6004:17::254
+114  ping 140.130.17.254
+115  cd /etc/netplan
+116  ls -l
+117  sudo vi 00-installer-config.yaml
+118  sudo netplan apply
+119  ping 140.130.17.254
+120  pwd
+121  cd
+122  ls -l
+123  cd tmp
+124  dir
+125  ls -l
+126  cd cd2020pj1
+127  git pull
+128  cd ..
+129  ls -l
+130  cd wcm2020
+131  git pull
+132  cd ..
+133  cd wcmj2020
+134  git pull
+135  ls -l
+136  cd ..
+137  ping 140.130.17.254
+138  ifconfig
+139  sudo apt install net-tools
+140  ifconfig
+141  ping 10.0.2.1
+142  clear
+143  ifconfig
+144  ping 140.130.17.254
+145  ifconfig
+146  sudo apt install net-tools
+147  ifconfig
+148  ping 140.130.17.254
+149  cd cd2020pj1
+150  python3 wsgi.py
+151  firefox&amp;
+152  sudo halt
+153  firefox&amp;
+154  xterm&amp;
+155  xterm&amp;
+156  cd tmp
+157  ls -l
+158  cd
+159  ls -l
+160  coppeliasim4&amp;
+161  cd coppeliasim4_rev4
+162  ls -l
+163  mv C* coppeliasim4
+164  ls -l
+165  cd coppeliasim4
+166  ls -l
+167  ls -l cop*
+168  ./coppeliaSim.sh
+169  clear
+170  pwd
+171  ls -l
+172  cd coppeliasim_rev4
+173  mv co* copp4
+174  ls -l
+175  cd copp4
+176  ls -l
+177  cd coppeliasim4
+178  ls -l co*
+179  ./coppeliaSim.sh&amp;
+180  leo&amp;
+181  cd 
+182  cd tmp
+183  cd cd2020pj1
+184  ls -l
+185  cd downloads
+186  ls -l
+187  nautilus&amp;
+188  sudo apt install nautilus
+189  sudo netplan apply
+190  sudo apt install nautilus
+191  ls -l
+192  sudo rm *.pdf
+193  cd /etc/netplan
+194  ls -l
+195  sudo vi 00-installer-config.yaml
+196  sudo netplan apply
+197  sudo apt install nautilus
+198  sudo apt update
+199  firefox&amp;
+200  sudo apt install nautilus
+201  ping 140.130.17.254
+202  ifconfig
+203  ping 140.130.17.254
+204  ifconfig
+205  ping 10.0.2.15
+206  ping 10.0.2.100
+207  ping 10.0.2.1
+208  ping 140.130.17.69
+209  sudo apt install nautilus
+210  ifconfig
+211  ping 140.130.17.254
+212  xterm&amp;
+213  sudo vi 00-installer-config.yaml
+214  sudo netplan apply
+215  ping 140.130.17.4
+216  sudo apt install nautilus
+217  sudo apt update
+218  ping 140.130.17.254
+219  ping 140.130.17.4
+220  ping 168.95.1.1
+221  ping dns.mde.nfu.edu.tw
+222  cd /etc/apt
+223  sl -l
+224  ls -l
+225  cd apt.conf.d
+226  ls -l
+227  sudo vi proxy.conf
+228  sudo apt update
+229  sudo apt install nautils
+230  sudo apt install nautilus
+231  nautilus&amp;
+232  ls -l
+233  sudo vi proxy.conf
+234  sudo apt update
+235  sudo apt autoremove
+236  ls -l
+237  sudo rm proxy.conf
+238  clear
+239  cd
+240  ifconfig
+241  ping 140.130.17.254
+242  ifconfig
+243  ping 10.0.2.15
+244  sudo netplan apply
+245  ping 140.130.17.254
+246  cd ..
+247  cd
+248  ls -l
+249  cd tmp
+250  cd cd2020pj1
+251  ls -l
+252  python3 wsgi.py
+253  firefox&amp;
+254  xterm&amp;
+255  ls -l
+256  cd tmp
+257  ls -l
+258  cd cd2020pj1
+259  ls -l
+260  python3 wsgi.py
+261  sudo vi wsgi.py
+262  python3 wsgi.py
+263  cd docs
+264  ls -l
+265  cd cmsimde
+266  ls -l
+267  vi wsgi.py
+268  python3 wsgi.py
+269  cd /etc/netplan
+270  ls -l
+271  sudo vi 00-installer-config.yaml
+272  ping 2001:288:6004:17::254
+273  ifconfig
+274  ping 10.0.2.15
+275  sudo halt
+276  xterm&amp;
+277  pwd
+278  cd /etc/netplan
+279  pwd
+280  ls -l
+281  ls
+282  ls -l
+283  cd
+284  ls -a
+285  ls -l 
+286  cd /etc/netplan
+287  ls -l
+288  sudo vi 00-installer-config.yaml
+289  ifconfig
+290  ping6 2001:288:6004:17::254
+291  firefox&amp;
+292  ls -l
+293  cd tmp
+294  ls -l
+295  cd cd2020pj1
+296  git pull
+297  git config --global http.proxy http://[2001:288:6004:17::69]:3128
+298  git pull
+299  python3 wsgi.py
+300  cd ..
+301  cd 
+302  cd tmp
+303  dir
+304  ls -l
+305  git clone https://github.com/mdecourse/cd2020pj1.git 
+306  ifconfig
+307  cd
+308  history &gt; history.txt</pre>
+<h3>wcm.kmol.info</h3>
+<p>純 IPv6 網路設定</p>
+<p>使用 Mako Template 而非之前使用的 Jinja2 Template</p>
+<p>準備利用 Lets Encrypted 設定 SSL</p>
+<p></p><h2>W15</h2>
+<p><a href="https://drive.google.com/open?id=1g3ehjpuvv8YvazGHfgx162EFem8ZCAEI">網際協同程式開發進度說明影片</a> (for @gm users only)</p>
+<p><a href="https://www.fossil-scm.org/">https://www.fossil-scm.org/</a> 是一套以 ANSI C 編寫的分散式版本, 只是目前還無法完全配置在純 IPv6 的主機上.</p><h2>Windows</h2>
+<p>Use Firefox to conduct <a href="https://meet.google.com">https://meet.google.com</a> online meeting. Since we are using G Suite for Education, meeting recording and live stream functions are available.</p>
+<p>Use Firefox to connect to <a href="https://youtube.com">https://youtube.com</a> and add live stream video with OBS streaming integrated withYoutube server.</p><h2>Ubuntu</h2>
+<p>Login to @gm account and download <a href="https://drive.google.com/open?id=143jFMheM1xjLxhLkSAouThLzj3WUYX6_">Virtualbox appliance of Ubuntu 20.04</a> (<a href="https://drive.google.com/open?id=13Gqwyj0CGR6wa9dZg_BmlCLv5cNYWQJ_">W12 version</a>) for CMSiMDE, Oauth2 and CoppeliaSim remote API program development.</p>
+<h4>Install OBS for Ubuntu</h4>
+<p><a href="https://obsproject.com/wiki/install-instructions#ubuntu-installation">https://obsproject.com/wiki/install-instructions#ubuntu-installation</a></p><h2>Mac</h2>
+<p>Use Safari to conduct <a href="https://meet.google.com">https://meet.google.com</a> online meeting. Since we are using G Suite for Education, meeting recording and live stream functions are available.</p>
+<p>Even with System Preferences to grant "Screen Recording" privacy setup, Firefox does not allow user to share screen operation during online Google Handout Meet session.</p>
+<p>Use Firefox to connect to <a href="https://youtube.com">https://youtube.com</a> and add live stream video with OBS streaming integrated withYoutube server.</p>
+<h1>CMS</h1>
+<p>Use Google + Domain API to setup login for @gm.nfu.edu.tw users</p>
+<p><a href="https://console.developers.google.com">https://console.developers.google.com</a></p>
+<p>Setup <span _ngcontent-lcy-c83="" class="cfc-table-title ng-star-inserted" id="cfc-table-caption-14" role="presentation">OAuth 2.0 Client IDs </span></p>
+<p>Use <a href="https://github.com/authomatic/authomatic">https://github.com/authomatic/authomatic</a> to allow user login with Google or Github accounts.<span _ngcontent-lcy-c83="" class="cfc-table-title ng-star-inserted" id="cfc-table-caption-14" role="presentation"></span></p>
+<h4>Get your oauth_gm.txt file content:</h4>
+<ol>
+<li style="padding-left: 30px;">Login to your @gm account</li>
+<li style="padding-left: 30px;">Link to <a href="https://console.developers.google.com">https://console.developers.google.com</a></li>
+<li style="padding-left: 30px;">Accept the license and  create Google API project</li>
+<li style="padding-left: 30px;">Enable Google + Domain API</li>
+<li style="padding-left: 30px;">Under Google + Domain API credentials, press CONFIGURE CONSENT SCREEN button</li>
+<li style="padding-left: 30px;">Select Internal or External user type and add a new application name</li>
+<li style="padding-left: 30px;">Under API and Services, enter into Credentials page</li>
+<li style="padding-left: 30px;">Create "<span _ngcontent-ith-c126="" class="cfc-table-title ng-star-inserted" id="cfc-table-caption-1" role="presentation">OAuth 2.0 Client IDs" type credential for Web Application</span></li>
+<li style="padding-left: 30px;">Authorized JavaScript origins: <a href="https://localhost:8443">https://localhost:8443</a></li>
+<li style="padding-left: 30px;">Authorized redirect URIs: <a href="https://localhost:8443/login/google/">https://localhost:8443/login/google/</a></li>
+<li style="padding-left: 30px;">Save your Client ID and Client secret into oauth_gm.txt</li>
+</ol>
+<h4>URI settings for localhost:</h4>
+<p><img alt="" class="add_border" height="743" src="/images/console_developers_credentials.png" width="800"/></p><h2>Flask</h2>
+<h4><span>Python and Flask</span></h4>
+<p style="padding-left: 30px;"><span>Login to your gm email account and download <a href="https://drive.google.com/file/d/17_LCSvwgtnIG8FnpezfUlEdbo3Y6G6CP/view?usp=sharing">2019_ABeginnersGuideToPython3Programming.pdf</a></span></p>
+<p style="padding-left: 30px;"><span>Login to your gm email account and download <a href="https://drive.google.com/file/d/1u3PHIbGWz3r4bct_molJg8FODkS8tf02/view?usp=sharing">2019_BuildingRESTAPIsWithFlask.pdf</a></span></p>
+<p>Flask has two major components, Werkzeug and Jinja2. While Werkzeug is responsible for providing routing, debugging, and Web Server Gateway Interface (WSGI), Flask leverages Jinja2 as template engine.</p>
+<p>Basic Flask application:</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/') 
+def hello_world():
+    return 'Hello, From Flask!'
+
+if __name__== '__main__': 
+	app.run()</pre>
+<p>The preceding code imports the Flask library, initiates the application by creating an instance of the Flask class, declares the route, and then defines the function to execute when the route is called. This code is enough to start your first Flask application.</p>
+<p>The most important feature of REST is its statelessness, which simply means that<br/>neither the client nor the server has to know the state of each other to be able to communicate. In this way, both the client and the server can understand any message received without seeing the previous message.</p>
+<h4>Realtime Communication</h4>
+<p style="padding-left: 30px;"><a href="https://www.vonage.com/resources/articles/real-time-communications/">https://www.vonage.com/resources/articles/real-time-communications/</a></p>
+<p style="padding-left: 30px;"><a href="https://www.fullstackpython.com/webrtc.html">https://www.fullstackpython.com/webrtc.html</a></p>
+<h4>WebRTC</h4>
+<p style="padding-left: 30px;"><a href="https://av.tib.eu/media/20037">https://av.tib.eu/media/20037</a></p>
+<p style="padding-left: 30px;"><a href="https://github.com/nanomosfet/WebRTC-Flask-server">https://github.com/nanomosfet/WebRTC-Flask-server</a></p>
+<p style="padding-left: 30px;"><a href="https://webrtchacks.com/webrtc-cv-tensorflow/">https://webrtchacks.com/webrtc-cv-tensorflow/</a></p>
+<h4>Streaming Server</h4>
+<p style="padding-left: 30px;"><a href="https://blog.miguelgrinberg.com/post/video-streaming-with-flask">https://blog.miguelgrinberg.com/post/video-streaming-with-flask</a></p>
+<p style="padding-left: 30px;"><a href="https://github.com/miguelgrinberg/flask-video-streaming">https://github.com/miguelgrinberg/flask-video-streaming</a></p>
+<p style="padding-left: 30px;"><a>https://opensource.com/article/19/1/gstreamer</a><a href="https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/">https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/</a></p>
+<h4>IOT</h4>
+<p style="padding-left: 30px;"><a href="https://dreamingecho.es/blog/internet-of-things-with-python-and-flask">https://dreamingecho.es/blog/internet-of-things-with-python-and-flask</a></p>
+<p style="padding-left: 30px;"><a href="https://medium.com/@rovai/from-data-to-graph-a-web-jorney-with-flask-and-sqlite-6c2ec9c0ad0">https://medium.com/@rovai/from-data-to-graph-a-web-jorney-with-flask-and-sqlite-6c2ec9c0ad0</a> </p>
+<p style="padding-left: 30px;"></p><h2>Dart</h2>
+<p>Use dart2js to compile Dart html program into javascript and interacted with Flask program.</p>
+<div></div>
+<div id="wrapper"><canvas height="200" id="canvas" width="300"></canvas><br/> <button id="button">Clear Canvas</button> <button id="roc">Draw ROC</button> <button id="usa">Draw USA</button></div>
+<script src="/downloads/drawROC.js">
+</script>
+<h4>WebRTC</h4>
+<p style="padding-left: 30px;"><a href="https://pub.dev/packages/flutter_webrtc">https://pub.dev/packages/flutter_webrtc</a></p>
+<p style="padding-left: 30px;"><a href="https://github.com/cloudwebrtc/flutter-webrtc">https://github.com/cloudwebrtc/flutter-webrtc</a></p>
+<h2>Database</h2>
+<h1>Linkages</h1>
+<p><iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="allowfullscreen" frameborder="0" height="315" src="https://www.youtube.com/embed/IjoSLafsA2w" width="560"></iframe></p>
+<p><iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="allowfullscreen" frameborder="0" height="315" src="https://www.youtube.com/embed/VI-d1C9MkOU" width="560"></iframe></p>
+<h2>Solvespace</h2>
+<p><a href="https://github.com/solvespace/solvespace">https://github.com/solvespace/solvespace</a></p>
+<h2>Pyslvs-UI</h2>
+<p><a href="https://github.com/KmolYuan/Pyslvs-UI">https://github.com/KmolYuan/Pyslvs-UI</a></p>
+<h2>Range3</h2>
+<p><a href="https://github.com/Range-Software/range3">https://github.com/Range-Software/range3</a></p>
+<h1>Mechatronics</h1>
+<h2>Arduino</h2>
+<p><a href="https://www.makerspaces.com/wp-content/uploads/2017/02/Arduino-For-Beginners-REV2.pdf">https://www.makerspaces.com/wp-content/uploads/2017/02/Arduino-For-Beginners-REV2.pdf</a></p>
+<h3>Picsimlab</h3>
+<p><a href="https://github.com/lcgamboa/picsimlab">https://github.com/lcgamboa/picsimlab</a></p>
+<p>Download <a href="https://drive.google.com/open?id=1lHv2fJg9y7yhUO4Oqz-AH_EBQAaD8dzG">picsimlab_0_7_5_win64_setup.exe</a> (only for @gm users)</p>
+<h3>Unoardusim</h3>
+<p><a href="https://www.sites.google.com/site/unoardusim/">https://www.sites.google.com/site/unoardusim/</a></p>
+<p>Download <a href="https://drive.google.com/open?id=1jehjObb-ai--N0ckdd6pHIT8IuwbaFiF">UnoArduSimV2.7.1.zip</a> (only for @gm users)</p>
+<h2>CoppeliaSim</h2>
+<p><a href="https://www.coppeliarobotics.com/">https://www.coppeliarobotics.com/</a></p>
+<p>Download <a href="https://drive.google.com/open?id=1xA76U7uEC6SAqMU4qpNbRJGSdzrVJJeL">CoppeliaSim_Edu_V4_0_0_Win.zip</a> (for @gm users only)</p>
+<h3>RemoteAPI</h3>
+<p>Download <a href="https://drive.google.com/open?id=1uTCnYdN6PrUIGSSsjynNIT591EXvVUJA">web_vrep2.zip</a> (for @gm users only)</p>
+<p>Download <a href="https://drive.google.com/open?id=1KlnsgBFyp6OpCC_BlYH-jKL4uJixpoBl">CoppeliaSim_4_Self_Driving_Car_Simulation.7z</a> (for @gm users only)</p>
+<p style="padding-left: 30px;">When execute python remote api, opencv-python and imutils modules are needed.</p>
+<p style="padding-left: 60px;">pip install opencv-python</p>
+<p style="padding-left: 60px;">pip install imutils</p>
+<p style="padding-left: 30px;">DefaultCamera with threaded child script and start the simRemoteApi on port 19999.</p>
+<pre class="brush:lua;auto-links:false;toolbar:false" contenteditable="false">simRemoteApi.start(19999)</pre>
+<p style="padding-left: 30px;">Therefore user can control the simulated model through the CoppeliaSim_Server_IP on port 19999.</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">clientID = vrep.simxStart('CoppeliaSim_Server_IP',19999,True,True,5000,5) # Get the client ID</pre>
+<p style="padding-left: 30px;">Use</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">While True:</pre>
+<p style="padding-left: 30px;">to replace</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">for i in range(150):</pre>
+<p style="padding-left: 30px;">the image of the remote vision sensor will be sent to the remote API client through <a href="https://pypi.org/project/opencv-python/">https://pypi.org/project/opencv-python/</a></p>
+<p>reading and display vision sensor image using python remoate api (<a href="http://www.forum.coppeliarobotics.com/viewtopic.php?f=9&amp;t=7012#p27785">來源</a>)</p>
+<p>改為 Python 3 相容</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false"># -*- coding: utf-8 -*-
+"""
+Created on Sun Jul 05 15:01:58 2015
+
+@author: ACSECKIN
+
+python -m pip install opencv-python
+"""
+
+import vrep
+import time
+import cv2
+import numpy as np
+
+vrep.simxFinish(-1)
+
+clientID = vrep.simxStart('127.0.0.1', 19997, True, True, 5000, 5)
+
+if clientID!=-1:
+    print('Connected to remote API server')
+    print('Vision Sensor object handling')
+    res, v1 = vrep.simxGetObjectHandle(clientID, 'vs1', vrep.simx_opmode_oneshot_wait)
+    print('Getting first image')
+    err, resolution, image = vrep.simxGetVisionSensorImage(clientID, v1, 0, vrep.simx_opmode_streaming)
+    while (vrep.simxGetConnectionId(clientID) != -1):
+        err, resolution, image = vrep.simxGetVisionSensorImage(clientID, v1, 0, vrep.simx_opmode_buffer)
+        if err == vrep.simx_return_ok:
+            print("image OK!!!")
+            img = np.array(image,dtype=np.uint8)
+            img.resize([resolution[1],resolution[0],3])
+            cv2.imshow('image',img)
+            if cv2.waitKey(1) &amp; 0xFF == ord('q'):
+                break
+        elif err == vrep.simx_return_novalue_flag:
+            print("no image yet")
+            pass
+        else:
+          print(err)
+else:
+  print("Failed to connect to remote API Server")
+  vrep.simxFinish(clientID)
+
+cv2.destroyAllWindows()</pre>
+<p><a href="/downloads/pythonBubbleRob.pdf">pythonBubbleRob.pdf</a></p>
+<p><a href="/downloads/lua_one_link_remote_api.7z">lua_one_link_remote_api.7z</a></p>
+<p>V-rep 系統目錄中的 remoteApiConnections.txt 可以同時啟動多個 port 允許多 client 連線:</p>
+<pre class="brush:js;auto-links:false;toolbar:false" contenteditable="false">// This file defines all the continuous remote API server services (started at remote API plugin initialization, i.e. V-REP start-up)
+//
+// Each remote API server service requires following 3 entries:
+//
+// portIndex@_port = xxxx               // where xxxx is the desired port number (below 19997 are preferred for server services starting at V-REP start-up)
+// portIndex@_debug = xxxx              // where xxxx is true or false
+// portIndex@_syncSimTrigger = xxxx     // where xxxx is true or false. When true, then the service will be pre-enabled for synchronous operation.
+//
+// In above strings, @ can be any number starting with 1. If more than one server service is required, then numbers need to be consecutive and starting with 1
+
+// Let's start a continuous remote API server service on port 19997:
+portIndex1_port             = 19997
+portIndex1_debug            = false
+portIndex1_syncSimTrigger   = true
+
+portIndex2_port             = 19998
+portIndex2_debug            = false
+portIndex2_syncSimTrigger   = true
+</pre>
+<p>在遠端的多台電腦, 可以利用</p>
+<p>clientID = vrep.simxStart('Server_IP', 19997, True, True, 5000, 5)</p>
+<p>與</p>
+<p><span>clientID = vrep.simxStart('Server_IP', 19998, True, True, 5000, 5)</span></p>
+<p><span>同時對 rempte API server 進行操控, 各 client 並可以透過上述程式取得 rempte API Server 運作時的影像, 以便利用各 client 中的 python 程式對遠端 V-rep 模擬進行遠端操控.</span></p>
+<p><span>例如: 兩名使用者分別在不同電腦上對同一台 rempte API Server 中的不同四輪車模型進行操控.</span></p>
+<p><span>以下為另外一個參考程式:</span></p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">import vrep
+
+print('Program started')
+vrep.simxFinish(-1) # just in case, close all opened connections
+clientID=vrep.simxStart('127.0.0.1',19999,True,True,5000,5)
+if clientID!=-1:
+    print('Connected to remote API server')
+    res,v0=vrep.simxGetObjectHandle(clientID,'Vision_sensor',vrep.simx_opmode_oneshot_wait)
+    res,v1=vrep.simxGetObjectHandle(clientID,'PassiveVision_sensor',vrep.simx_opmode_oneshot_wait)
+
+    res,resolution,image=vrep.simxGetVisionSensorImage(clientID,v0,0,vrep.simx_opmode_streaming)
+    while (vrep.simxGetConnectionId(clientID)!=-1):
+        res,resolution,image=vrep.simxGetVisionSensorImage(clientID,v0,0,vrep.simx_opmode_buffer)
+        if res==vrep.simx_return_ok:
+            res=vrep.simxSetVisionSensorImage(clientID,v1,image,0,vrep.simx_opmode_oneshot)
+    vrep.simxFinish(clientID)
+else:
+    print('Failed connecting to remote API server')
+print('Program ended')</pre>
+<p>此外 system 目錄下的 usrset.txt 可以進行客製化設定</p>
+<h4>參考資料</h4>
+<p style="padding-left: 30px;"><a href="/downloads/Virtual Experiments Design for Robotics Based on V-REP.pdf">Virtual Experiments Design for Robotics Based on V-REP.pdf</a></p>
+<p style="padding-left: 30px;"><a href="https://arxiv.org/pdf/1906.11176.pdf">Pyrep: bringing V-rep to deep robot learning.pdf</a></p>
+<p style="padding-left: 30px;"><a href="http://fid.cl/courses/ai-robotics/vrep-tut/pythonBubbleRob.pdf">Controlling your robot with Python.pdf</a></p>
+<h3>Self-driving car ex</h3>
+<p>以下所使用的場景與原始控制程式:</p>
+<p style="padding-left: 30px;">Download <a href="https://drive.google.com/open?id=1KlnsgBFyp6OpCC_BlYH-jKL4uJixpoBl">CoppeliaSim_4_Self_Driving_Car_Simulation.7z</a> (for @gm users only)</p>
+<p>設定 CoppeliaSim 目錄中的 remoteApiConnections.txt 檔, 啟動時開啟內建的 19997 與 19999 埠號.</p>
+<h4>remoteApiConnections.txt</h4>
+<pre class="brush:js;auto-links:false;toolbar:false" contenteditable="false">// This file defines all the continuous remote API server services (started at remote API plugin initialization, i.e. CoppeliaSim start-up)
+//
+// Each remote API server service requires following 3 entries:
+//
+// portIndex@_port = xxxx               // where xxxx is the desired port number (below 19997 are preferred for server services starting at CoppeliaSim start-up)
+// portIndex@_debug = xxxx              // where xxxx is true or false
+// portIndex@_syncSimTrigger = xxxx     // where xxxx is true or false. When true, then the service will be pre-enabled for synchronous operation.
+//
+// In above strings, @ can be any number starting with 1. If more than one server service is required, then numbers need to be consecutive and starting with 1
+
+// Let's start a continuous remote API server service on port 19997:
+portIndex1_port             = 19997
+portIndex1_debug            = false
+portIndex1_syncSimTrigger   = true
+
+portIndex2_port             = 19999
+portIndex2_debug            = false
+portIndex2_syncSimTrigger   = true
+</pre>
+<p>然後利用 CoppeliaSim 已經開啟的 19999 埠號, 從 client 端以 Python remote API 程式控制遠端 Server 上的機電系統, 主要關鍵在於啟動連線, 開啟場景檔案, 然後啟動該場景的模擬後, 取得遠端模擬<a href="https://www.coppeliarobotics.com/helpFiles/en/visionSensors.htm"> vision sensor</a> 的影像後進行 remote 操控:</p>
+<p>有關 vision sensor 與 camera 的差異:</p>
+<p>Make sure not to mix-up vision sensors with <a href="https://www.coppeliarobotics.com/helpFiles/en/cameras.htm">cameras</a>. Following are the main differences:</p>
+<p style="padding-left: 30px;"></p>
+<ul>
+<li>A vision sensor has a fixed resolution. A camera has no specific resolution (i.e. it adjusts automatically to the view size).</li>
+<li>A vision sensor's image content can be accessed via the <a href="https://www.coppeliarobotics.com/helpFiles/en/apisOverview.htm">API</a>, and image processing handles via <a href="https://www.coppeliarobotics.com/helpFiles/en/visionCallbackFunctions.htm">vision callback functions</a>. A camera's image content is not directly available via the API.</li>
+<li>A vision sensor generally requires more CPU time and operates slower than cameras.</li>
+<li>A vision sensor can only display <a href="https://www.coppeliarobotics.com/helpFiles/en/renderableObjects.htm">renderable objects</a>. A camera can display all <a href="https://www.coppeliarobotics.com/helpFiles/en/objects.htm">object types</a>.</li>
+</ul>
+<p></p>
+<p>Vision sensors are added to the <a href="https://www.coppeliarobotics.com/helpFiles/en/scenes.htm">scene</a> with [menu bar --&gt; Add --&gt; Vision sensor].</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">clientID = vrep.simxStart('127.0.0.1',19999,True,True,5000,5) # Get the client ID
+res=vrep.simxLoadScene(clientID,"Y:\CoppeliaSim_4_Self_Driving_Car_Simulation\sdc.ttt",0,vrep.simx_opmode_blocking)
+x =vrep.simxStartSimulation(clientID,vrep.simx_opmode_oneshot_wait) </pre>
+<p>以下則為完整的 car_model.py:</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false"># -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 06 22:00:39 2015
+
+@author: Karan Vivek Bhargava
+"""
+#Import Libraries:
+import vrep                  #V-rep library
+import sys
+import time                #used to keep track of time
+import numpy as np         #array library
+import cv2
+import imutils
+
+# Model for the car with two variables throttle and steering
+class CarControl():
+    def __init__(self, clientID, printFlag = False):
+        self.clientID = clientID;
+        # retrieve motor  handles
+        errorCode, self.steer_handle = vrep.simxGetObjectHandle(self.clientID, 'steer_joint', vrep.simx_opmode_oneshot_wait);
+        errorCode, self.motor_handle = vrep.simxGetObjectHandle(self.clientID, 'motor_joint', vrep.simx_opmode_oneshot_wait);
+        errorCode, self.fl_brake_handle = vrep.simxGetObjectHandle(self.clientID, 'fl_brake_joint', vrep.simx_opmode_oneshot_wait);
+        errorCode, self.fr_brake_handle = vrep.simxGetObjectHandle(self.clientID, 'fr_brake_joint', vrep.simx_opmode_oneshot_wait);
+        errorCode, self.bl_brake_handle = vrep.simxGetObjectHandle(self.clientID, 'bl_brake_joint', vrep.simx_opmode_oneshot_wait);
+        errorCode, self.br_brake_handle = vrep.simxGetObjectHandle(self.clientID, 'br_brake_joint', vrep.simx_opmode_oneshot_wait);
+        errorCode, self.camera_f_handle = vrep.simxGetObjectHandle(self.clientID, 'cam_f', vrep.simx_opmode_oneshot_wait);
+        
+        vrep.simxGetVisionSensorImage(self.clientID, self.camera_f_handle, 0, vrep.simx_opmode_streaming)
+        print('Received Handles...');
+
+        self.factor = 30/(2.68*3.6);
+        self.max_throttle = 19; # Kmph
+        self.max_reverse_throttle = -19; #Kmph
+        self.max_steer = 30; # Degrees
+
+        self.printFlag = printFlag;
+        
+        # Self test the camera
+        print('Setting up the camera system...');
+        self.lastFrame = None;
+        err = 0;
+        while(err != 1):
+            err, self.lastFrame = self.get_image();
+        print('Camera setup successful.')
+        
+
+    def set_throttle(self, target_speed):
+        if(target_speed &gt; self.max_throttle):
+            target_speed = self.max_throttle;
+        elif(target_speed &lt; self.max_reverse_throttle):
+            target_speed = self.max_reverse_throttle;
+        if(self.printFlag):
+            print('Setting throttle to', target_speed);
+        speed = target_speed * self.factor;
+        errorCode = vrep.simxSetJointTargetVelocity(self.clientID, self.motor_handle, speed, vrep.simx_opmode_streaming);
+
+    def set_steering(self, steer_pos):
+        if(abs(steer_pos) &gt; self.max_steer):
+            if(steer_pos &gt; 0):
+                steer_pos = self.max_steer;
+            else:
+                steer_pos = -self.max_steer;
+        if(self.printFlag):
+            print('Setting steering to', steer_pos);
+        # Convert to radians
+        steer_pos = np.deg2rad(steer_pos);        
+        errorCode = vrep.simxSetJointTargetPosition(self.clientID, self.steer_handle, steer_pos, vrep.simx_opmode_streaming);
+
+    def get_info(self):
+        # Check velocity
+        err, bl_wheel_vel = vrep.simxGetObjectFloatParameter(self.clientID, self.bl_brake_handle, vrep.sim_jointfloatparam_velocity, vrep.simx_opmode_streaming);
+        err, br_wheel_vel = vrep.simxGetObjectFloatParameter(self.clientID, self.br_brake_handle, vrep.sim_jointfloatparam_velocity, vrep.simx_opmode_streaming);
+        rear_wheel_velocity = ((bl_wheel_vel) + (br_wheel_vel))/2.0;
+        linear_velocity = rear_wheel_velocity * 0.09 * 3.6; # Kmph
+
+        throttle = linear_velocity;
+        steer_errorCode, steer_pos = vrep.simxGetJointPosition(self.clientID, self.steer_handle, vrep.simx_opmode_streaming);
+        if(self.printFlag):
+            print('Throttle:', throttle, 'Steering:', steer_pos);
+
+    def get_image(self):
+        err, resolution, image = vrep.simxGetVisionSensorImage(self.clientID, self.camera_f_handle, 0, vrep.simx_opmode_buffer);
+        if err == vrep.simx_return_ok:
+            img = np.array(image,dtype=np.uint8);
+            img.resize([resolution[1],resolution[0],3]);
+            self.lastFrame = imutils.rotate_bound(img, 90);
+            return 1, self.lastFrame;
+        elif err == vrep.simx_return_novalue_flag:
+            return 0, None;
+        else:
+            return err, None;
+
+vrep.simxFinish(-1) # just in case, close all opened connections
+clientID = vrep.simxStart('127.0.0.1',19999,True,True,5000,5) # Get the client ID
+res=vrep.simxLoadScene(clientID,"Y:\CoppeliaSim_4_Self_Driving_Car_Simulation\sdc.ttt",0,vrep.simx_opmode_blocking)
+x =vrep.simxStartSimulation(clientID,vrep.simx_opmode_oneshot_wait) 
+
+if clientID!=-1:  #check if client connection successful
+    print('Connected to remote API server')
+    
+else:
+    print('Connection not successful')
+    sys.exit('Could not connect')
+
+# Initialize car control object
+car = CarControl(clientID, printFlag = False);
+car.set_steering(20); # Degrees
+car.set_throttle(1);  # Kmph
+
+for i in range(150):
+    # Start time for image process
+    start = time.time();
+
+    err, img = car.get_image();
+
+    # End time for image process
+    end = time.time();
+
+    dt = end - start;
+    print('Frame took:', dt*1000.0, 'ms');
+    cv2.imshow('image',img);
+    cv2.waitKey(1); # in milliseconds
+    </pre>
+<p></p><h2>Webots</h2>
+<p><a href="https://cyberbotics.com/">https://cyberbotics.com/</a></p>
+<p></p>
+<p></p>
+<p></p>
